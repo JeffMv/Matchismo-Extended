@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>306FF641-AA17-4BD9-A33E-0038D941E1BD</string>
+	<key>IDESourceControlProjectName</key>
+	<string>MatchismoJMM</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>8FBDCAFD0E992436B0EAC30F3500F39873ECD443</key>
+		<string>https://git.epfl.ch/repo/stanford-ios-7.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Assigment 1/MatchismoJMM/MatchismoJMM.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>8FBDCAFD0E992436B0EAC30F3500F39873ECD443</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://git.epfl.ch/repo/stanford-ios-7.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>8FBDCAFD0E992436B0EAC30F3500F39873ECD443</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>8FBDCAFD0E992436B0EAC30F3500F39873ECD443</string>
+			<key>IDESourceControlWCCName</key>
+			<string>stanford-ios-7</string>
+		</dict>
+	</array>
+</dict>
+</plist>
