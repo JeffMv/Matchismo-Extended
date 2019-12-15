@@ -9,6 +9,7 @@
 #import "CardGameViewController.h"
 #import "CardMatchingGame.h"
 #import <AVFoundation/AVFoundation.h>
+#import <math.h>
 
 
 @interface CardGameViewController () <AVAudioPlayerDelegate>
@@ -123,19 +124,22 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
         [indexes addObject:@(idx)];
     }];
-    NSArray *shuffledIndexes = [self shuffledArray:indexes];
-    NSArray *shuffledCardButtons = [self permutedArray:self.cardButtons withPermutation:shuffledIndexes];
+    // NSArray *shuffledIndexes = [self shuffledArray:indexes];
+    // NSArray *shuffledCardButtons = [self permutedArray:self.cardButtons withPermutation:shuffledIndexes];
+    NSArray *shuffledCardButtons = [self cardButtonsOrderedByClosestToDeckStack];;
+    NSArray *reversedShuffledCardButtons = [self reversedArray:shuffledCardButtons];
     
     // Trying to fix the animation where cards are dealt under other set cards
-    [self putViewsToFront:shuffledCardButtons];
+//     [self putViewsToFront:shuffledCardButtons];
+    [self putViewsToFront:reversedShuffledCardButtons];
     
     NSArray *positionBkp = [self saveViewsPositionInArray:shuffledCardButtons];
     
-    NSArray *reversedShuffledCardButtons = [self reversedArray:shuffledCardButtons];
     
     NSArray *cardButtonsOrderedForShuffleAnimation = nil;
-    cardButtonsOrderedForShuffleAnimation = shuffledCardButtons;
-//    cardButtonsOrderedForShuffleAnimation = reversedShuffledCardButtons;
+//    cardButtonsOrderedForShuffleAnimation = shuffledCardButtons;
+    cardButtonsOrderedForShuffleAnimation = reversedShuffledCardButtons;
+    // cardButtonsOrderedForShuffleAnimation = [self cardButtonsOrderedByClosestToDeckStack];
     
     double movingDuration = [self moveCardButtons:cardButtonsOrderedForShuffleAnimation toCornerAnimated:YES];
     //double movingDuration = [self moveCardButtons:shuffledCardButtons toCornerAnimated:YES];
@@ -196,7 +200,13 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 {
 //    CGFloat decalage = self.view.frame.size.height > 480 ? 9 : 8; // difference 3.5", 4"
     CGFloat decalage = 0.4;
-    CGPoint cornerPoint = [self uiDeckPositionBasedOnShiftLength:decalage];
+    // Corner point where the bottom-most card should be placed.
+    // (For instance, in UI perspective: the location where the deck of cards should be placed.)
+    CGPoint deckStartCornerPoint = [self uiDeckPositionBasedOnShiftLength:decalage];
+    // CGPoint currentCornerPoint = deckStartCornerPoint;  // copy by value
+//    CGPoint cornerPointOfTopMostCard = CGPointMake(deckStartCornerPoint.x, (deckStartCornerPoint.y + (decalage * (cardViews.count - 1))));
+    CGPoint cornerPointOfTopMostCard = deckStartCornerPoint;
+    CGPoint currentCornerPoint = cornerPointOfTopMostCard; // copy by value
     
     NSTimeInterval minimumDuration = 0.30,
 //    durationVariation = 0.60,
@@ -216,10 +226,10 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
                              animations:^{
                                  
                                 CGRect frame = button.frame;
-                                frame.origin = cornerPoint;
+                                frame.origin = currentCornerPoint;
                                 button.frame = frame;
                                  // Playing a sound for each card being moved
-//                                 button.frame.origin = cornerPoint;
+//                                 button.frame.origin = currentCornerPoint;
 //                                 NSURL *cardShuffleSoundUrl = [NSURL URLWithString:[[NSBundle mainBundle] pathForResource:@"card-shuffled-1" ofType:@"mp3"]];
 //                                 [self playNewSound:cardShuffleSoundUrl];
                                  
@@ -232,12 +242,14 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
             
         } else {
             CGRect frame = button.frame;
-            frame.origin = cornerPoint;
+            frame.origin = currentCornerPoint;
             button.frame = frame;
             NSLog(@"Move to corners : animation disabled");
         }
         
-        cornerPoint.y += decalage;
+        // Now 
+        currentCornerPoint.y += decalage;  // when we start by moving the bottom-most card first
+//        currentCornerPoint.y -= decalage;  // when we start by moving the top-most card first
     }
     
     return (animated ? delay+minimumDuration : 0.0 );
@@ -360,6 +372,36 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     }
     
     return positions;
+}
+
+- (double)distanceFromPoint:(CGPoint)start toPoint:(CGPoint)target {
+    CGFloat xs = start.x, ys = start.y;
+    CGFloat xf = target.x, yf = target.y;
+    CGFloat dx = (xf - xs), dy = (yf - ys);
+    CGFloat hyp = (dx*dx) + (dy*dy);
+    return sqrt(hyp);
+}
+
+- (NSArray *)cardButtonsOrderedByClosestToDeckStack {
+    NSMutableArray *views = [NSMutableArray array];
+    CGFloat decalage = 0.4;
+    CGPoint deckStartCornerPoint = [self uiDeckPositionBasedOnShiftLength:decalage];
+
+    views = [NSMutableArray arrayWithArray:self.cardButtons];
+    [views sortUsingComparator: ^NSComparisonResult(UIView *buttonA, UIView *buttonB){
+        CGFloat d1 = [self distanceFromPoint:buttonA.frame.origin toPoint:deckStartCornerPoint];
+        CGFloat d2 = [self distanceFromPoint:buttonB.frame.origin toPoint:deckStartCornerPoint];
+        
+        // NSComparisonResult result = esign((int) (10000 * (d1 - d2)));
+        NSComparisonResult result = (int) (d1 < d2);
+        if (d1 == d2) {
+            result = 0;
+        }
+
+        return result;
+    }];
+    
+    return views;
 }
 
 
