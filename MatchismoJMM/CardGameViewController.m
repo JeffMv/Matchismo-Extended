@@ -114,11 +114,22 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 
 - (void)animatedRedraw
 {
-    self.boutonNouvellePartie.enabled = NO;
-    NSArray *shiftedCardButtons = [self shiftedArray:self.cardButtons];
+    NSMutableArray *indexes = [NSMutableArray array];
+    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(1, self.cardButtons.count)];
+    [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
+        [indexes addObject:@(idx)];
+    }];
     
-    NSArray *positionBkp = [self saveViewsPositionInArray:shiftedCardButtons];
-    double movingDuration = [self moveCardButtons:shiftedCardButtons toCornerAnimated:YES];
+    //
+    self.boutonNouvellePartie.enabled = NO;
+    NSArray *shuffledIndexes = [self shuffledArray:indexes];
+    NSArray *shuffledCardButtons = [self permutedArray:self.cardButtons withPermutation:shuffledIndexes];
+//    NSArray *shuffledCardButtons = [self shuffledArray:self.cardButtons];
+    
+    // Trying to fix the animation where cards are dealt under other set cards
+    
+    NSArray *positionBkp = [self saveViewsPositionInArray:shuffledCardButtons];
+    double movingDuration = [self moveCardButtons:shuffledCardButtons toCornerAnimated:YES];
     
 
     // restore card buttons with old positions
@@ -128,7 +139,7 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     double springDamping = 1.0;
     
     
-    dispatch_queue_t delayQueue = dispatch_queue_create("AnimatedRedraw delay queue", NULL);
+    dispatch_queue_t delayQueue = dispatch_queue_create("AnimatedCardDistribution delay queue", NULL);
     dispatch_async(delayQueue, ^{
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -156,6 +167,9 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     gameDidStart = YES;
 }
 
+/** Returns the position where the start of the deck on the screen.
+ * @param offset:
+ */
 - (CGPoint)uiDeckPositionBasedOnShiftLength:(CGFloat)decalage {
     // Move cards to the left
 //    CGFloat decalage = self.view.frame.size.height > 480 ? 9 : 8; // difference 3.5", 4"
@@ -338,10 +352,9 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     
     for (UIView *view in views) {
         if ([view isKindOfClass:[UIView class]]){
-            
+            // CGPoint objects cannot be added to an array
             [positions addObject:[NSNumber numberWithFloat:view.frame.origin.x]];
             [positions addObject:[NSNumber numberWithFloat:view.frame.origin.y]];
-            
         }
     }
     
@@ -391,19 +404,34 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 }
 
 
-- (NSArray *)shiftedArray:(NSArray *)array
+/** Returns a shuffled version of an array
+ */
+- (NSArray *)shuffledArray:(NSArray *)array
 {
     NSMutableArray *mArray = [[NSMutableArray alloc] initWithArray:array];
-    NSMutableArray *shiftedArray = [[NSMutableArray alloc] initWithCapacity:mArray.count];
+    NSMutableArray *shuffled = [[NSMutableArray alloc] initWithCapacity:mArray.count];
     
     while ( mArray.count > 0) // while there is still some objects in mArray
     {
         NSUInteger randomIndex = arc4random() % mArray.count;
-        [shiftedArray addObject:[mArray objectAtIndex:randomIndex]];
+        [shuffled addObject:[mArray objectAtIndex:randomIndex]];
         [mArray removeObjectAtIndex:randomIndex];
     }
     
-    return shiftedArray;
+    return shuffled;
+}
+
+/** Permutes
+ */
+- (NSArray *)permutedArray:(NSArray *)array withPermutation:(NSArray *)sigma {
+    assert(array.count == sigma.count);
+    
+    NSMutableArray *result = [NSMutableArray array];
+    for (NSUInteger i=0; i < self.cardButtons.count; ++i) {
+        id value = [array objectAtIndex:[sigma[i] integerValue]];
+        [result addObject:value];
+    }
+    return result;
 }
 
 
