@@ -114,22 +114,31 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 
 - (void)animatedRedraw
 {
+    // Ensure the user does not launch an animation while this one is occuring.
+    self.boutonNouvellePartie.enabled = NO;
+    gameDidStart = NO;
+
     NSMutableArray *indexes = [NSMutableArray array];
-    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(1, self.cardButtons.count)];
+    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.cardButtons.count-1)];
     [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
         [indexes addObject:@(idx)];
     }];
-    
-    //
-    self.boutonNouvellePartie.enabled = NO;
     NSArray *shuffledIndexes = [self shuffledArray:indexes];
     NSArray *shuffledCardButtons = [self permutedArray:self.cardButtons withPermutation:shuffledIndexes];
-//    NSArray *shuffledCardButtons = [self shuffledArray:self.cardButtons];
     
     // Trying to fix the animation where cards are dealt under other set cards
+    [self putViewsToFront:shuffledCardButtons];
     
     NSArray *positionBkp = [self saveViewsPositionInArray:shuffledCardButtons];
-    double movingDuration = [self moveCardButtons:shuffledCardButtons toCornerAnimated:YES];
+    
+    NSArray *reversedShuffledCardButtons = [self reversedArray:shuffledCardButtons];
+    
+    NSArray *cardButtonsOrderedForShuffleAnimation = nil;
+    cardButtonsOrderedForShuffleAnimation = shuffledCardButtons;
+//    cardButtonsOrderedForShuffleAnimation = reversedShuffledCardButtons;
+    
+    double movingDuration = [self moveCardButtons:cardButtonsOrderedForShuffleAnimation toCornerAnimated:YES];
+    //double movingDuration = [self moveCardButtons:shuffledCardButtons toCornerAnimated:YES];
     
 
     // restore card buttons with old positions
@@ -138,12 +147,15 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     incrementalDelay = 0.15;
     double springDamping = 1.0;
     
-    
+    NSArray *cardsOrderedForDealingAnimation = nil;
+    cardsOrderedForDealingAnimation = reversedShuffledCardButtons;
+//    cardsOrderedForDealingAnimation = shuffledCardButtons;
+
     dispatch_queue_t delayQueue = dispatch_queue_create("AnimatedCardDistribution delay queue", NULL);
     dispatch_async(delayQueue, ^{
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self animateDealingCardButtons:self.cardButtons
+            [self animateDealingCardButtons:cardsOrderedForDealingAnimation
          withSavedPositionsAsArrayOfNumbers:positionBkp
                         withMinimumDuration:minimumDuration
                           durationVariation:durationVariation
@@ -153,16 +165,6 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 
         });
     });
-    
-    
-    /*
-    [self animateDealingCardButtons:self.cardButtons
- withSavedPositionsAsArrayOfNumbers:positionBkp
-                withMinimumDuration:minimumDuration
-                  durationVariation:durationVariation
-                       minimumDelay:minimumDelay+movingDuration
-                   incrementalDelay:incrementalDelay
-             usingSpringWithDamping:springDamping];*/
     
     gameDidStart = YES;
 }
@@ -190,7 +192,7 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     return frame;
 }
 
-- (NSTimeInterval)moveCardButtons:(NSArray *)cardButtons toCornerAnimated:(BOOL)animated // with
+- (NSTimeInterval)moveCardButtons:(NSArray *)cardViews toCornerAnimated:(BOOL)animated // with
 {
 //    CGFloat decalage = self.view.frame.size.height > 480 ? 9 : 8; // difference 3.5", 4"
     CGFloat decalage = 0.4;
@@ -202,11 +204,10 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     NSTimeInterval incrementalDelay = 0.111; // fine tuned to match duration of sound "card-deck-shuffled-1.mp3"
     
     NSURL *deckShuffleSoundUrl = [NSURL URLWithString:[[NSBundle mainBundle] pathForResource:@"card-deck-shuffled-1" ofType:@"mp3"]];
-    [self playNewSound:deckShuffleSoundUrl withDelay:0.5];
+    [self playNewSound:deckShuffleSoundUrl withDelay:0.5]; // delay fine-tuned with the song file
     
-    for (int i=0; i < self.cardButtons.count; ++i) {
-        UIView *button = [self.cardButtons objectAtIndex:i];
-        
+    for (int i=0; i < cardViews.count; ++i) {
+        UIView *button = [cardViews objectAtIndex:i];
         
         if (animated){
             [UIView animateWithDuration:minimumDuration
@@ -362,6 +363,69 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
 }
 
 
+/** Places the given view frontmost (in their parent's view hierarchy).
+ *  The first view passed in will be behind and the last view of the array will
+ *  be on top of those.
+ */
+- (void)putViewsToFront:(NSArray *)views {
+    // When passing through the array
+    // The first view that was but in from will become the one at the bottom
+    UIView *superview = [views[0] superview];
+    NSLog(@"First view to front is %@", @([views[0] hash]));
+    for (NSUInteger i = 0; i < views.count; ++i){
+        UIView *aView = views[i];
+        CGPoint position = aView.frame.origin;
+        NSLog(@"top most %lu) is at index %@, position %@, hash %@", i, @([superview.subviews indexOfObject:aView]), NSStringFromCGPoint(position), @([aView hash]));
+        [aView.superview bringSubviewToFront:aView];
+        NSLog(@"   -> %lu)  now at index %@", i, @([superview.subviews indexOfObject:aView]));
+    }
+    UIView *first = [views firstObject];
+    UIView *last = [views lastObject];
+    NSLog(@"First  view sent to front now at index %@, position %@, hash %@ ", @([superview.subviews indexOfObject:first]), NSStringFromCGPoint(first.frame.origin), @([first hash]));
+    NSLog(@"Latest view sent to front now at index %@, position %@, hash %@ ", @([superview.subviews indexOfObject:last]), NSStringFromCGPoint(last.frame.origin), @([last hash]));
+    
+}
+
+
+/**
+ * It is supposed to move views to in the view hierarchy so that ...
+ */
+- (void)reorderViewHierarchyOrderOfViews:(NSArray *)views toMatchNewIndexes:(NSArray *)indexes {
+    NSMutableDictionary *viewsDictionary = [NSMutableDictionary dictionary];
+    
+    for (NSUInteger i = 0; i < views.count; ++i){
+        UIView *aView = views[i];
+        NSNumber *index = [indexes objectAtIndex:[indexes[i] integerValue]];
+        viewsDictionary[@(aView.hash)] = @{
+                                           @"vw": aView,
+                                           @"supvw": aView.superview,
+                                           @"hash": @(aView.hash),
+                                           /// Putting every view EXACTLY the where it was and between the right siblings
+                                           // if we ever add more views along with the cards,
+                                           // we have to make sure we place *each* card button exactly where it was
+                                           // in the view hierarchy to avoid side effects and weird animations.
+                                           // Though it is important to note that...
+                                           @"indexInSuperview": @([[aView.superview subviews] indexOfObject:aView]),
+                                           @"targetindex": index
+                                           };
+        // Theme
+//        [aView removeFromSuperview]; it would change the index of
+    }
+    
+    for (UIView *aView in views){
+        [aView removeFromSuperview];
+    }
+    
+    // for (NSDictionary *viewInfos in viewsDictionary){
+    for (NSString *key in viewsDictionary){
+        NSDictionary *viewInfos = viewsDictionary[key];
+        UIView *aView = viewInfos[@"vw"];
+        UIView *superview = viewInfos[@"supvw"];
+        NSNumber *index = viewInfos[@"indexInSuperview"];
+        [superview insertSubview:aView atIndex:index.integerValue];
+    }
+}
+
 
 
 /**
@@ -388,7 +452,6 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
             CGRect newFrame = curView.frame;
             newFrame.origin = origine;
             
-//            [UIView animateWithDuration:<#(NSTimeInterval)#> delay:<#(NSTimeInterval)#> usingSpringWithDamping:<#(CGFloat)#> initialSpringVelocity:<#(CGFloat)#> options:<#(UIViewAnimationOptions)#> animations:<#^(void)animations#> completion:<#^(BOOL finished)completion#>]
             [curView setFrame:newFrame];
             
         }
@@ -421,13 +484,19 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     return shuffled;
 }
 
-/** Permutes
+- (NSArray *)reversedArray:(NSArray *)array {
+    NSArray *reversed = [[array reverseObjectEnumerator] allObjects];
+    // NSLog(@"%lu vs %lu, equal: %@", array.hash, reversed.hash, @(array == reversed)); // equal: 0
+    return reversed;
+}
+
+/** Permutes an array given a permutation of indexes
  */
 - (NSArray *)permutedArray:(NSArray *)array withPermutation:(NSArray *)sigma {
     assert(array.count == sigma.count);
     
     NSMutableArray *result = [NSMutableArray array];
-    for (NSUInteger i=0; i < self.cardButtons.count; ++i) {
+    for (NSUInteger i=0; i < MIN(array.count, sigma.count); ++i) {
         id value = [array objectAtIndex:[sigma[i] integerValue]];
         [result addObject:value];
     }

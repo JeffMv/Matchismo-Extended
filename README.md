@@ -2,9 +2,12 @@
 
 [toc]
 
-Last update: 22 sept 2017
 
-## iOS - Jeu de carte basique type Memory
+
+New features and update to new new iPhone screens: sept 2017
+Initial development year: 2015.
+
+## iOS - Jeu de carte type Memory
 
 
 Une démo de jeu de type *Memory* démontrant certains aspects de mes compétences.
