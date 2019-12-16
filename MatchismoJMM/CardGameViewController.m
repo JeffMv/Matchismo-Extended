@@ -119,6 +119,18 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     self.boutonNouvellePartie.enabled = NO;
     gameDidStart = NO;
 
+    /** It shuffles the cards by picking them in a given order.
+     *  Having the cards picked up in a random order would introduce an issue
+     *  because of the view hierarchy. Basically, shuffling cards in a random
+     *  order requires that you put on top of the view hierarchy the cards you
+     *  are moving (otherwise they might appear to be sliding under other
+     *  cards).
+     *  And in best case scenario, if you fix the "cards sliding under cards"
+     *  issue, you would be faced with another issue where the cards that are
+     *  supposed to be on the bottom of the deck are actually on top of the
+     *  view hierarchy. All this is due to the fact that the order of the card
+     *  button views in the view hierarchy.
+     */
     NSMutableArray *indexes = [NSMutableArray array];
     NSIndexSet *indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.cardButtons.count-1)];
     [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
@@ -129,7 +141,8 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     NSArray *shuffledCardButtons = [self cardButtonsOrderedByClosestToDeckStack];;
     NSArray *reversedShuffledCardButtons = [self reversedArray:shuffledCardButtons];
     
-    // Trying to fix the animation where cards are dealt under other set cards
+    /// Fix for the animation where cards are dealt under other set cards
+    /// basically, if we 
 //     [self putViewsToFront:shuffledCardButtons];
     [self putViewsToFront:reversedShuffledCardButtons];
     
@@ -137,7 +150,7 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
     
     
     NSArray *cardButtonsOrderedForShuffleAnimation = nil;
-//    cardButtonsOrderedForShuffleAnimation = shuffledCardButtons;
+    // cardButtonsOrderedForShuffleAnimation = shuffledCardButtons;
     cardButtonsOrderedForShuffleAnimation = reversedShuffledCardButtons;
     // cardButtonsOrderedForShuffleAnimation = [self cardButtonsOrderedByClosestToDeckStack];
     
@@ -247,7 +260,8 @@ void changeStrokeAlpha(UIView *view, CGFloat alpha)
             NSLog(@"Move to corners : animation disabled");
         }
         
-        // Now 
+        // UI: the next card should be slightly offset the previous to create
+        // a 3D effect for the deck.
         currentCornerPoint.y += decalage;  // when we start by moving the bottom-most card first
 //        currentCornerPoint.y -= decalage;  // when we start by moving the top-most card first
     }
