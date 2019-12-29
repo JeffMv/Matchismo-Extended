@@ -394,7 +394,7 @@
 			attributes = {
 				CLASSPREFIX = CardGame;
 				LastUpgradeCheck = 0610;
-				ORGANIZATIONNAME = "jeffrey.mvutumabilama@epfl.ch";
+				ORGANIZATIONNAME = "Jeffrey Mvutu Mabilama";
 				TargetAttributes = {
 					B40EF7A41947CBE3000518BE = {
 						DevelopmentTeam = N675R44GW6;

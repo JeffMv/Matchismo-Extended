@@ -2,8 +2,8 @@
 //  CardMatchingGame.h
 //  MatchismoJMM
 //
-//  Created by jeffrey.mvutu@gmail.com on 20.06.14.
-//  Copyright (c) 2014 jeffrey.mvutumabilama@epfl.ch. All rights reserved.
+//  Created by Jeffrey Mvutu Mabilama on 20.06.14.
+//  Copyright (c) 2014 Jeffrey Mvutu Mabilama. All rights reserved.
 //
 
 //#import <Foundation/Foundation.h>

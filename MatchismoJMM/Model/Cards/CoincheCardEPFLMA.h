@@ -2,8 +2,8 @@
 //  CoincheCardEPFLMA.h
 //  MatchismoJMM
 //
-//  Created by jeffrey.mvutu@gmail.com on 02.12.14.
-//  Copyright (c) 2014 jeffrey.mvutumabilama@epfl.ch. All rights reserved.
+//  Created by Jeffrey Mvutu Mabilama on 02.12.14.
+//  Copyright (c) 2014 Jeffrey Mvutu Mabilama. All rights reserved.
 //
 
 #import "Card.h"

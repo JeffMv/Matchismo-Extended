@@ -2,7 +2,7 @@
 //  PlayingCardView.h
 //  SuperCard
 //
-//  Created by jeffrey.mvutu@gmail.com on 29.11.14.
+//  Created by Jeffrey Mvutu Mabilama on 29.11.14.
 //  Copyright (c) 2014 JFrey Mab'. All rights reserved.
 //
 

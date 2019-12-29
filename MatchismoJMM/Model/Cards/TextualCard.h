@@ -3,7 +3,7 @@
 //  MatchismoJMM
 //
 //  Created by user on 06.10.17.
-//  Copyright © 2017 jeffrey.mvutumabilama@epfl.ch. All rights reserved.
+//  Copyright © 2017 Jeffrey Mvutu Mabilama. All rights reserved.
 //
 
 #import "Card.h"
